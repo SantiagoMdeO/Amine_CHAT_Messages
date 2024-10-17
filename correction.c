@@ -87,12 +87,24 @@ int main()
 
 	//modify this bitch please
 	//has to start the first turn.
-	send(turno[i]); // manda turno
+	char mensaje[MSGSIZE] //16
+	sprintf(mensaje,"Es tu turno %d",0);
+	if(mq_send(queue_id[0],mensaje,attr.mq_msgsize,0)==-1)
+		fprintf(stderr,"Error al mandar mensaje\n"); 
 	
 	
 	// espera a que todos terminen
 	for(int i = 0; i <JUGADORES; i++) {
 		wait(NULL);
 	}
+
+	//clsoe all semaphores
+	for(int i = 0; i< JUGADORES; i++){
+		mq_close(queue_id[i]);
+		mq_unlink(queues[i]); //erases any previous message that could have stayed 
+		free(queues[i]);
+	}
+	//cerrar todo bien, le damos free a la memoria?
+
 	return 0;
 }
