@@ -26,12 +26,21 @@ void jugador(int* x, mqd_t* queue_id){
 	int next = (i + 1) % JUGADORES; //siguiente jugador
 	int jugadas = JUGADAS; 
 	char mensaje[MSGSIZE] //16
+	int prority;
+
+
 	
 	while(jugadas --){
 		receive(turno[i]); //bloqueante
 		//if we receive a message, its your turn
+		if(mq_receive(queue_id[i],mensaje,attr.mq_msgsize,&prority)==-1)
+			fprintf(stderr,"\t\t\tError al recibir mensaje\n");
+		else
+			printf("\t\t%s\n",mensaje);	// Imprimir el mensaje
+
 		//playyy
 		//wait a bit to see
+		usleep(800000);		// Espera 8/10 segundos entre cada receive
 		//send that its the turn of the next one
 		//JUGADOR_JUEGA
 
