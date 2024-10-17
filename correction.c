@@ -13,7 +13,7 @@
 
 #define FLAGS 0			// Default
 #define MAXMSG 2		// Máximo un mensaje en el buzón //segun yo no deberia haber razon para mas de dos mensajes
-#define MSGSIZE 128		// Tamaño máximo del mensaje
+#define MSGSIZE 16		// Tamaño máximo del mensaje espero que sea de bytes y no de bites, por que si no valio
 #define CURMSGS 0		// Mensajes actuales en el buzón
 struct mq_attr attr = {FLAGS,MAXMSG,MSGSIZE,CURMSGS};
 
@@ -21,15 +21,28 @@ struct mq_attr attr = {FLAGS,MAXMSG,MSGSIZE,CURMSGS};
 int turno[JUGADORES];
 
 
-void jugador(int* x, mqd_t q){
+void jugador(int* x, mqd_t* queue_id){
   	int i = *x;
 	int next = (i + 1) % JUGADORES; //siguiente jugador
 	int jugadas = JUGADAS; 
+	char mensaje[MSGSIZE] //16
 	
 	while(jugadas --){
 		receive(turno[i]); //bloqueante
+		//if we receive a message, its your turn
+		//playyy
+		//wait a bit to see
+		//send that its the turn of the next one
 		//JUGADOR_JUEGA
-		send(turno[next]); // no bloqueante
+
+		//we send next turn
+		
+		sprintf(mensaje,"Es tu turno %d",i);
+		if(mq_send(queue_id[next],mensaje,attr.mq_msgsize,0)==-1)
+		{
+			fprintf(stderr,"Error al mandar mensaje\n"); //al chile si sale esto, sera corregirlo
+			//por que si sale mal, no se me occuriria mas que matar al proceso padre con un kill 0
+		}
 	}
 	exit(0);
 }
@@ -59,11 +72,12 @@ int main()
     	list[i] = i;
 		if (p == 0){
       		//agregamos esto por miedo de que dos jugdores obtuvieran el mismo turno
-			jugador(&list[i], queue_id[i]);
+			jugador(&list[i], queue_id);
 		}
 	}
 
 	//modify this bitch please
+	//has to start the first turn.
 	send(turno[i]); // manda turno
 	
 	
