@@ -1,16 +1,34 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <mqueue.h>
+#include <sys/wait.h>
+
+
 #define JUGADORES 4
 #define JUGADAS 15
 
+
+#define FLAGS 0			// Default
+#define MAXMSG 2		// Máximo un mensaje en el buzón //segun yo no deberia haber razon para mas de dos mensajes
+#define MSGSIZE 128		// Tamaño máximo del mensaje
+#define CURMSGS 0		// Mensajes actuales en el buzón
+struct mq_attr attr = {FLAGS,MAXMSG,MSGSIZE,CURMSGS};
+
+
 int turno[JUGADORES];
 
-void jugador(int* x){
-  int i = *x;
+
+void jugador(int* x, mqd_t q){
+  	int i = *x;
 	int next = (i + 1) % JUGADORES; //siguiente jugador
 	int jugadas = JUGADAS; 
 	
 	while(jugadas --){
 		receive(turno[i]); //bloqueante
-		JUGADOR_JUEGA
+		//JUGADOR_JUEGA
 		send(turno[next]); // no bloqueante
 	}
 	exit(0);
@@ -18,28 +36,40 @@ void jugador(int* x){
 
 int main()
 {
-	int i;
 	int p;
-  int list[JUGADORES]
+  	int list[JUGADORES] //to send their indeividual turns without problems
+	char* queues[JUGADORES]; // to save for example: //   "/mqueue0" and "/mqueue1"
+	mqd_t queue_id[4];	// Buzón de mensajes
+
+    
+
+    for(int i =0; i < JUGADORES; i++){
+        queues[i] = (char*)malloc(SIZEQUEUES * sizeof(char));  //allocate memory for each
+        snprintf(queues[i], SIZEQUEUES, "/mqueue%d", i); // puts string into buffer
+        mq_unlink(queues[i]); //erases any previous message that could have stayed in the queue
+
+		//open the semaphore and save teh queue id
+		queue_id[i] = mq_open(queues[i] ,O_WRONLY | O_CREAT, 0666, &attr);
+		if(queue_id[i]==-1)
+			fprintf(stderr,"Error al crear la cola de mensajes [%d]\n", i);
+    }
 	
-	// Inicia buzones
-	for(i = 0; i < JUGADORES; i++){
-		initmsj(&turno[i], 0);
+	for(int i = 0; i < JUGADORES; i++){
+		p = fork();
+    	list[i] = i;
+		if (p == 0){
+      		//agregamos esto por miedo de que dos jugdores obtuvieran el mismo turno
+			jugador(&list[i], queue_id[i]);
+		}
 	}
-	
+
+	//modify this bitch please
 	send(turno[i]); // manda turno
 	
-	for(i = 0; i < JUGADORES; i++){
-		p = fork();
-    list[i] = i;
-		if (p == 0){
-      //agregamos esto por miedo de que dos jugdores obtuvieran el mismo turno
-			jugador(&list[i]);
-		}
-}
+	
 	// espera a que todos terminen
-	for(i = 0; i <JUGADORES; i++) {
+	for(int i = 0; i <JUGADORES; i++) {
 		wait(NULL);
 	}
-	return 0;
+	return 0;
 }
