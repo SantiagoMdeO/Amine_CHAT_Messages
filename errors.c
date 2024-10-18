@@ -70,7 +70,7 @@ int main()
         mq_unlink(queues[i]); //erases any previous message that could have stayed in the queue
 
                 //open the semaphore and save teh queue id
-                queue_id[i] = mq_open(queues[i] ,O_WRONLY | O_CREAT, 0666, &attr);
+                queue_id[i] = mq_open(queues[i] ,O_RDWR | O_CREAT, 0666, &attr);
                 if(queue_id[i]==-1)
                         fprintf(stderr,"Error al crear la cola de mensajes [%d]\n", i);
     }
