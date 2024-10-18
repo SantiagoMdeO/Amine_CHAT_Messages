@@ -40,7 +40,7 @@ void jugador(int* x, mqd_t* queue_id){
                 //playyy
                 //wait a bit to see
                 usleep(800000);         // Espera 8/10 segundos entre cada receive
-                printf("juego el turno [%d]\n", i)
+                printf("juego el turno [%d]\n", i);
                 //send that its the turn of the next one
                 //JUGADOR_JUEGA
 
